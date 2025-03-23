@@ -38,7 +38,7 @@
 
 ## 소프트웨어 사용법 
 1. 라즈베리파이 전원 연결.
-2. VNC 뷰어에 이름 pi, 라즈베리파이 IP : 192.168.1.41 로 연결
+2. VNC 뷰어에 이름 pi, 라즈베리파이 IP : 192.168.1.41 로 연결 (라베파 비밀번호 ki258436)
 3. cd /mediapipe
 4. source mediapipe_env/bin/activate 
 5. python tapo_hand.py
