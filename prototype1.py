@@ -11,9 +11,12 @@ TAPO_PASSWORD = "qq12345678"
 TAPO_BULB_IP = "192.168.1.58"  # 전구의 로컬 IP 주소
 
 # MediaPipe 손 인식 모듈 초기화
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7)
-mp_draw = mp.solutions.drawing_utils
+hands = mp_hands.Hands(
+    max_num_hands=1,  # 한 손만 감지 (처리량 절감)
+    min_detection_confidence=0.5,  # 감지 정확도 낮춤 (속도 증가)
+    min_tracking_confidence=0.5  # 추적 정확도 낮춤 (속도 증가)
+)
+
 
 # Tapo API 클라이언트 초기화
 client = ApiClient(TAPO_USERNAME, TAPO_PASSWORD)
@@ -42,28 +45,24 @@ async def turn_on_bulb():
     if device:
         await device.on()
         print("Bulb turned on!")
-        await asyncio.sleep(1)
 
 # Tapo 전구 끄기
 async def turn_off_bulb():
     if device:
         await device.off()
         print("Bulb turned off!")
-        await asyncio.sleep(1)
 
 # Tapo 전구 색상 변경 (파란색)
 async def set_blue_color():
     if device:
         await device.set_hue_saturation(195, 100)
         print("Bulb color set to Blue!")
-        await asyncio.sleep(1)
 
 # Tapo 전구 색상 변경 (핑크)
 async def set_red_color():
     if device:
         await device.set().brightness(50).color(Color.HotPink).send(device)
         print("Bulb color set to Red!")
-        await asyncio.sleep(1)
 
 # 제스처 판별 함수
 def detect_gesture(hand_landmarks):
@@ -79,7 +78,7 @@ def detect_gesture(hand_landmarks):
     pinky_tip = hand_landmarks.landmark[20]  # 새끼 끝
     pinky_mcp = hand_landmarks.landmark[17]  # 새끼 기저부
 
-    # Thumb Up (불 켜기): 엄지가 가장 위에 있고 나머지 손가락이 굽어 있음
+    # Thumb Up (불 켜기)
     thumb_up = (
         thumb_tip.y < index_tip.y and
         thumb_tip.y < middle_tip.y and
@@ -91,7 +90,7 @@ def detect_gesture(hand_landmarks):
         pinky_tip.y > pinky_mcp.y
     )
 
-    # Thumb Down (불 끄기): 엄지가 가장 아래에 있고 나머지 손가락이 굽어 있음
+    # Thumb Down (불 끄기)
     thumb_down = (
         thumb_tip.y > index_tip.y and
         thumb_tip.y > middle_tip.y and
@@ -103,7 +102,7 @@ def detect_gesture(hand_landmarks):
         pinky_tip.y > pinky_mcp.y
     )
 
-    # Index Up (파란색): 검지만 펴져 있고 나머지 손가락은 굽어 있음
+    # Index Up (파란색)
     index_up = (
         index_tip.y < index_mcp.y and  # 검지가 펴져 있음
         middle_tip.y > middle_mcp.y and  # 중지는 굽어 있음
@@ -112,7 +111,7 @@ def detect_gesture(hand_landmarks):
         thumb_tip.y > thumb_ip.y  # 엄지가 아래로
     )
 
-    # V Sign (빨간색): 검지와 중지가 펴져 있고 나머지 손가락은 굽어 있음
+    # V Sign (빨간색)
     v_sign = (
         index_tip.y < index_mcp.y and
         middle_tip.y < middle_mcp.y and
@@ -134,6 +133,9 @@ def detect_gesture(hand_landmarks):
 # Tapo 초기화 실행
 asyncio.run(init_tapo())
 
+# 마지막으로 인식된 제스처 상태 저장
+last_gesture = ""
+
 # 메인 루프
 while True:
     ret, frame = cap.read()
@@ -154,15 +156,18 @@ while True:
             mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             gesture_text = detect_gesture(hand_landmarks)
 
-            # 제스처에 따라 전구 제어
-            if gesture_text == "Thumb Up":
-                asyncio.run(turn_on_bulb())  # 엄지 척 -> 전구 켜기
-            elif gesture_text == "Thumb Down":
-                asyncio.run(turn_off_bulb())  # 엄지 아래 -> 전구 끄기
-            elif gesture_text == "Index Up":
-                asyncio.run(set_blue_color())  # 검지만 위 -> 파란색
-            elif gesture_text == "V Sign":
-                asyncio.run(set_red_color())  # 검지와 중지 위 -> 빨간색
+            # **이전 제스처와 다를 때만 실행**
+            if gesture_text and gesture_text != last_gesture:
+                last_gesture = gesture_text  # 이전 상태 업데이트
+
+                if gesture_text == "Thumb Up":
+                    asyncio.run(turn_on_bulb())  # 전구 켜기
+                elif gesture_text == "Thumb Down":
+                    asyncio.run(turn_off_bulb())  # 전구 끄기
+                elif gesture_text == "Index Up":
+                    asyncio.run(set_blue_color())  # 파란색 변경
+                elif gesture_text == "V Sign":
+                    asyncio.run(set_red_color())  # 빨간색 변경
 
     # FPS 표시
     xpos = 50
