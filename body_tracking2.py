@@ -11,10 +11,7 @@ video = cv2.VideoCapture(0)
 
 # 이전 프레임의 어깨 높이 저장 변수
 previous_avg_shoulder_height = None
-sudden_drop_threshold = 80  # 민감도를 줄이기 위해 높여본 값
-frame_drop_threshold = 5  # 여러 프레임에 걸친 변화량을 기준으로 판단
-
-fall_count = 0  # 낙상 검출 횟수
+sudden_drop_threshold = 50  # 순간적으로 떨어진다고 판단할 픽셀 값
 
 while video.isOpened():
     ret, frame = video.read()
@@ -53,13 +50,7 @@ while video.isOpened():
         if previous_avg_shoulder_height is not None:
             drop_amount = avg_shoulder_y - previous_avg_shoulder_height  # Y값이 커질수록 몸이 아래로 떨어짐
             if drop_amount > sudden_drop_threshold:  # 갑자기 아래로 내려간 경우
-                fall_count += 1
-            else:
-                fall_count = 0  # 급락이 아니면 카운트 초기화
-
-        # 낙상 감지 기준 강화: 여러 프레임에 걸쳐 일정 횟수 이상 급락이 발생한 경우만 낙상으로 처리
-        if fall_count >= frame_drop_threshold:
-            fall_detected = True
+                fall_detected = True
 
         # 상태 표시
         status_text = "Fall detected!" if fall_detected else "Normal"
