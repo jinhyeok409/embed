@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import requests
 from datetime import datetime
 
 # MediaPipe Pose 모델 초기화
@@ -17,6 +18,14 @@ fall_count = 0  # 낙상 감지 횟수
 fall_log_file = "fall_log.txt"  # 로그 저장 파일
 blink_duration = 10  # 빨간 화면 지속 프레임 수 (약 0.3초 정도)
 blink_counter = 0  # 빨간 화면 유지 타이머
+
+def send_fall_sms():
+    response = requests.post('https://textbelt.com/text', {
+        'phone': '+821089398223',  # 실제 전화번호 입력 (국제번호는 불가능)
+        'message': '낙상 감지됨! 긴급 확인 필요',
+        'key': '',
+    })
+    print(response.json())
 
 while video.isOpened():
     ret, frame = video.read()
@@ -66,7 +75,8 @@ while video.isOpened():
 
             # 화면을 빨간색으로 잠깐 변경
             blink_counter = blink_duration  
-
+            # 문자 메시지를 보냄
+            send_fall_sms()
             # 카운트 초기화
             fall_count = 0  
 
