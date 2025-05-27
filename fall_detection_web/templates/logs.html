@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fall Detection Logs</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+        img { width: 100px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <h1>Fall Detection Logs</h1>
+    <table>
+        <tr>
+            <th>Timestamp</th>
+            <th>Image</th>
+        </tr>
+        {% for timestamp, image_path in logs %}
+        <tr>
+            <td>{{ timestamp }}</td>
+            <td><img src="{{ url_for('static', filename='images/' + image_path) }}"></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
