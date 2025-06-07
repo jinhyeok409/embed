@@ -131,9 +131,10 @@ def main():
 
 
     # --- GStreamer 콜백 함수 정의 ---
+    # fall_detector.py
     def run_inference(engine, input_tensor):
-        return engine.run_inference(input_tensor)
-
+        # 3D numpy 배열을 1D로 펼쳐서 전달
+        return engine.run_inference(input_tensor.flatten())
     def render_overlay(engine, output, src_size, inference_box, frame):
         nonlocal n, sum_process_time, sum_inference_time, fps_counter
         nonlocal shoulder_y_history, fall_detected_time
